@@ -1,0 +1,50 @@
+# Medical datasets and derived data
+/data/
+/datasets/
+/BUSI/
+/BUSBRA/
+/local_images/
+/BreastUltrasound/
+**/BUSI/
+**/BUSBRA/
+**/local_images/
+**/BreastUltrasound/
+*.zip
+*.npz
+*.npy
+*.parquet
+
+# Local source/reference material and historical notebook with embedded scans
+/Breast_Cancer_VGG16_Colab.ipynb
+/notebooks/archive/
+/BreastCancerDetection.pdf
+/resume-().pdf
+
+# Model weights and run outputs
+*.keras
+*.h5
+*.hdf5
+/results/runs/
+/results/checkpoints/
+/results/tmp/
+
+# Python and notebook state
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+*.log
+
+# Local environment and secrets
+.env
+.venv/
+venv/
+env/
+credentials.json
+token.json
+secrets.json
+service-account*.json
+*.pem
+*.key
