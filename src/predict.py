@@ -116,7 +116,9 @@ def resolve_threshold(
     split = str(validation.get("evaluation_split", "")).lower()
     method = str(validation.get("threshold_selection", "")).lower()
     if "busi validation" not in split or "validation" not in method:
-        raise ValueError("Metrics JSON does not establish a threshold selected on BUSI validation data")
+        raise ValueError(
+            "Metrics JSON does not establish a threshold selected on BUSI validation data"
+        )
 
     selected = metrics.get("threshold_for_external_evaluation")
     if selected is None:
@@ -147,7 +149,9 @@ def preprocess_image(
         try:
             import cv2
         except ImportError as exc:
-            raise RuntimeError("OpenCV is required for image inference; install requirements.txt") from exc
+            raise RuntimeError(
+                "OpenCV is required for image inference; install requirements.txt"
+            ) from exc
 
         def read_grayscale(filename: str) -> np.ndarray | None:
             return cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
@@ -159,7 +163,9 @@ def preprocess_image(
     try:
         import numpy as np
     except ImportError as exc:
-        raise RuntimeError("NumPy is required for image inference; install requirements.txt") from exc
+        raise RuntimeError(
+            "NumPy is required for image inference; install requirements.txt"
+        ) from exc
     if preprocessor is None:
         # Reuse the existing pipeline implementation (same resize and normalization).
         try:
@@ -196,7 +202,9 @@ def load_checkpoint(model_path: str | Path, device: str = "cpu") -> tuple[Any, A
     try:
         import tensorflow as tf
     except ImportError as exc:
-        raise RuntimeError("TensorFlow is required to load a checkpoint; install requirements.txt") from exc
+        raise RuntimeError(
+            "TensorFlow is required to load a checkpoint; install requirements.txt"
+        ) from exc
     try:
         with tf.device("/CPU:0"):
             model = tf.keras.models.load_model(str(path), compile=False)
