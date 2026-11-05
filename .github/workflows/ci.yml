@@ -29,6 +29,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Resolve production dependencies without installing
+        run: python -m pip install --dry-run --ignore-installed --disable-pip-version-check -r requirements.txt
+
       - name: Install lightweight lint tool
         run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
 
