@@ -233,9 +233,7 @@ def predict_image(
     if not image_file.is_file():
         raise FileNotFoundError(f"Image file does not exist: {image_file}")
     threshold_value, threshold_source = resolve_threshold(checkpoint, threshold, metrics_json)
-    image_batch = preprocess_image(
-        image_file, image_reader=image_reader, preprocessor=preprocessor
-    )
+    image_batch = preprocess_image(image_file, image_reader=image_reader, preprocessor=preprocessor)
     loader = model_loader or load_checkpoint
     model, runtime = loader(checkpoint, device)
     try:
@@ -297,8 +295,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model", required=True, help="Path to a locally saved Keras checkpoint")
     parser.add_argument("--image", required=True, help="Path to one breast ultrasound image")
     decision = parser.add_mutually_exclusive_group()
-    decision.add_argument("--threshold", type=float, help="Explicit malignant probability threshold")
-    decision.add_argument("--metrics-json", help="Matching run metrics.json with BUSI validation threshold")
+    decision.add_argument(
+        "--threshold", type=float, help="Explicit malignant probability threshold"
+    )
+    decision.add_argument(
+        "--metrics-json", help="Matching run metrics.json with BUSI validation threshold"
+    )
     parser.add_argument("--output-json", help="Optional path for prediction and metadata JSON")
     parser.add_argument("--device", choices=("cpu",), default="cpu", help="Inference device (CPU)")
     args = parser.parse_args(argv)
