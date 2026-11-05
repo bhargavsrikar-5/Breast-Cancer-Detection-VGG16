@@ -6,7 +6,10 @@ import argparse
 import json
 import math
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
+
+if TYPE_CHECKING:
+    import numpy as np
 
 CLASS_NAMES = ("benign", "malignant")
 IMAGE_SIZE = (224, 224)
