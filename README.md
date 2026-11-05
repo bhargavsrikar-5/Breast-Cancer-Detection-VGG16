@@ -106,6 +106,31 @@ ruff format --check src tests scripts
 
 These checks parse notebook JSON and Python code cells without executing notebooks. Static CI does not train models, evaluate datasets, verify model accuracy, or establish clinical performance.
 
+## Single-image inference
+
+Use `src.predict` to load a locally saved Keras checkpoint and classify one ultrasound image. Inference reuses the project preprocessing pipeline and runs on CPU; it does not train or fine-tune a model. Install the project prerequisites with `python -m pip install -r requirements.txt`, then run from the repository root:
+
+```bash
+python -m src.predict --model results/runs/<run-name>/best_model.keras --image /path/to/ultrasound.png
+```
+
+Argmax is the default decision. Optionally pass either `--threshold 0.42` or the checkpoint run's adjacent `--metrics-json results/runs/<run-name>/metrics.json` to use a BUSI validation-selected threshold. Save structured output with `--output-json prediction.json`. Example JSON (illustrative values only):
+
+```json
+{
+  "predicted_class": "benign",
+  "confidence": 0.82,
+  "probabilities": {"benign": 0.82, "malignant": 0.18},
+  "decision_method": "Argmax",
+  "threshold": null,
+  "threshold_source": "Argmax (no threshold supplied)",
+  "model_path": "/local/path/best_model.keras",
+  "image_path": "/local/path/ultrasound.png"
+}
+```
+
+See the full [single-image inference guide](docs/inference.md) for local and Colab usage, threshold provenance, and limitations. A genuine checkpoint inference has not yet been independently runtime-verified. Predictions are research outputs only, not medical diagnoses, and must not guide screening or treatment decisions.
+
 ## Notebook execution order
 
 1. [`00_runtime_smoke_test.ipynb`](notebooks/00_runtime_smoke_test.ipynb) checks runtime imports and configured data paths with no training. Requirements installation and model-weight fetching are explicit opt-ins.

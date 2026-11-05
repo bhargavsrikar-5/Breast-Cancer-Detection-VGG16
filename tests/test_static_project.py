@@ -27,6 +27,7 @@ SOURCE_MODULES = (
     "model.py",
     "train.py",
     "evaluate.py",
+    "predict.py",
 )
 HISTORICAL_METRICS = {
     ("Original VGG16 (default argmax)", "BUSI exploratory test (130 images)"): (
