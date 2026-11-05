@@ -19,11 +19,11 @@ from sklearn.metrics import (
     accuracy_score,
     classification_report,
     confusion_matrix,
-    precision_score,
+    f1_score,
     precision_recall_curve,
+    precision_score,
     recall_score,
     roc_auc_score,
-    f1_score,
 )
 
 from src.preprocessing import CLASS_NAMES, preprocess_grayscale_image
@@ -36,7 +36,11 @@ def calculate_metrics(
 
     y_true = np.asarray(labels, dtype=np.int32)
     malignant_probability = np.asarray(probabilities, dtype=np.float64)
-    if y_true.ndim != 1 or malignant_probability.ndim != 1 or len(y_true) != len(malignant_probability):
+    if (
+        y_true.ndim != 1
+        or malignant_probability.ndim != 1
+        or len(y_true) != len(malignant_probability)
+    ):
         raise ValueError("labels and probabilities must be equally sized 1-D arrays")
     if len(y_true) == 0:
         raise ValueError("Cannot evaluate an empty label set")
@@ -66,9 +70,7 @@ def calculate_metrics(
         ),
     }
     result["roc_auc"] = (
-        float(roc_auc_score(y_true, malignant_probability))
-        if len(np.unique(y_true)) == 2
-        else None
+        float(roc_auc_score(y_true, malignant_probability)) if len(np.unique(y_true)) == 2 else None
     )
     return result
 
@@ -111,7 +113,10 @@ def resolve_busbra_threshold(
         value = float(threshold)
         if not 0 <= value <= 1:
             raise ValueError("Explicit BUSI validation threshold must be between 0 and 1")
-        return value, "Explicit caller-supplied threshold (must be selected on BUSI validation data)"
+        return (
+            value,
+            "Explicit caller-supplied threshold (must be selected on BUSI validation data)",
+        )
 
     metrics_file = (
         Path(metrics_json).expanduser().resolve()
@@ -177,7 +182,10 @@ def resolve_busbra_threshold(
         value = float(threshold)
         if not 0 <= value <= 1:
             raise ValueError("Explicit BUSI validation threshold must be between 0 and 1")
-        return value, "Explicit caller-supplied threshold (must be selected on BUSI validation data)"
+        return (
+            value,
+            "Explicit caller-supplied threshold (must be selected on BUSI validation data)",
+        )
 
     raise FileNotFoundError(
         f"No matching metrics.json found beside checkpoint {model_file}. "
@@ -249,13 +257,13 @@ def evaluate_busbra_archive(
             metadata = pd.read_csv(BytesIO(archive.read(metadata_name)))
             required = {"ID", "Pathology"}
             if not required.issubset(metadata.columns):
-                raise ValueError(f"Metadata {metadata_name} must contain columns {sorted(required)}")
+                raise ValueError(
+                    f"Metadata {metadata_name} must contain columns {sorted(required)}"
+                )
             metadata["normalized_pathology"] = (
                 metadata["Pathology"].astype(str).str.strip().str.lower()
             )
-            metadata = metadata[
-                metadata["normalized_pathology"].isin(CLASS_NAMES)
-            ]
+            metadata = metadata[metadata["normalized_pathology"].isin(CLASS_NAMES)]
             if metadata.empty:
                 raise ValueError("BUS-BRA metadata has no benign/malignant labeled images")
 
@@ -295,13 +303,10 @@ def evaluate_busbra_archive(
     )
     if (image_df.groupby("case_id")["label"].nunique() > 1).any():
         raise ValueError("Conflicting pathology labels were found within BUS-BRA cases")
-    case_df = (
-        image_df.groupby("case_id", as_index=False)
-        .agg(
-            label=("label", "first"),
-            malignant_probability=("malignant_probability", "mean"),
-            images=("image_id", "count"),
-        )
+    case_df = image_df.groupby("case_id", as_index=False).agg(
+        label=("label", "first"),
+        malignant_probability=("malignant_probability", "mean"),
+        images=("image_id", "count"),
     )
     case_metrics = calculate_metrics(
         case_df["label"].to_numpy(),
@@ -332,11 +337,14 @@ def main() -> None:
     parser.add_argument("--busbra-zip", required=True, help="Path to the BUS-BRA ZIP archive")
     parser.add_argument("--output-dir", required=True, help="External evaluation output folder")
     parser.add_argument(
-        "--threshold", type=float, default=None,
+        "--threshold",
+        type=float,
+        default=None,
         help="Explicit threshold selected on BUSI validation data; never tune on BUS-BRA",
     )
     parser.add_argument(
-        "--metrics-json", default=None,
+        "--metrics-json",
+        default=None,
         help="Matching metrics.json beside the selected checkpoint (preferred threshold source)",
     )
     parser.add_argument("--batch-size", type=int, default=16)
@@ -354,4 +362,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

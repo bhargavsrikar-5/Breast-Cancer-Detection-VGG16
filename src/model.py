@@ -58,4 +58,3 @@ def build_vgg16_model(
         metrics=["accuracy"],
     )
     return model
-

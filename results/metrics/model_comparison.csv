@@ -5,4 +5,4 @@ Class-weighted VGG16,BUSI exploratory test (130 images),0.7538,0.8036,0.5962,0.7
 Class-weighted VGG16 with block-5 fine-tuning,BUSI exploratory test (130 images),0.8692,0.9351,0.8378,0.7381,0.7848,0.6782,"[[82,6],[11,31]]","Training accuracy 0.9398; final validation accuracy 0.8462; best validation loss epoch 9."
 Fine-tuned BUSI model,BUS-BRA image level (1875 images),0.6400,0.6232,0.4300,0.3443,0.3824,0.6782,,"External evaluation; threshold selected on BUSI validation."
 Fine-tuned BUSI model,BUS-BRA case level (1064 cases),0.6880,0.6475,0.5275,0.2807,0.3664,0.6782,,"External evaluation; image probabilities averaged by case."
-Letterbox with class weighting and block-5 fine-tuning,BUSI validation (52 images),0.8269,0.8689,,,,,"Validation only; combined experiment does not isolate letterbox preprocessing."
+Letterbox with class weighting and block-5 fine-tuning,BUSI validation (52 images),0.8269,0.8689,,,,,,"Validation only; combined experiment does not isolate letterbox preprocessing."

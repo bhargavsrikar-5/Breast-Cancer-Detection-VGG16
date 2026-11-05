@@ -1,55 +1,85 @@
 # Breast Cancer Detection Using VGG16
 
-Research project on binary benign/malignant breast ultrasound image classification using transfer learning with VGG16. The paper-faithful frozen-backbone workflow is the default implementation. Class weighting, augmentation, fine-tuning, letterbox preprocessing, and BUS-BRA evaluation are separate workflows.
+[![Lightweight CI](https://github.com/bhargavsrikar-5/Breast-Cancer-Detection-VGG16/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/bhargavsrikar-5/Breast-Cancer-Detection-VGG16/actions/workflows/ci.yml)
 
-> **Research software only.** This repository is not a medical device and is not for diagnosis, screening, treatment decisions, or patient care. The experiments are small, retrospective, and not clinically validated.
+An academic research software project for binary benign/malignant classification of breast ultrasound images using transfer learning with VGG16. It provides a paper-faithful baseline, clearly separated experiments, a no-training Colab runtime check, and BUS-BRA external evaluation utilities.
 
-## Research context
+> **Research software only.** This project is not a medical device and is not intended for diagnosis, screening, treatment decisions, or patient care. The experiments are retrospective, small, and not clinically validated.
 
-The project brief identifies the research paper authors as Kummari Vishnu, Chegu Bhargav Srikar, and Pagalla Ashok, with Lakhan Dev Sharma as supervisor at VIT-AP University. The research objective is to classify BUSI ultrasound images as benign or malignant. The paper and resume PDFs may exist in a local checkout as personal/reference files; `.gitignore` excludes them from the public repository. Do not publish resume information.
+## At a glance
 
-## Methodology
+- **Problem:** classify BUSI ultrasound images as benign or malignant; the baseline excludes the `normal_scan` class.
+- **Why VGG16:** the research project is based on a transfer-learning VGG16 method using ImageNet features and a compact binary classification head.
+- **Technology:** Python, TensorFlow/Keras, OpenCV, NumPy, scikit-learn, Matplotlib, and Jupyter/Google Colab.
+- **Reproducibility:** shared source modules, explicit experiment settings, stratified split metadata, run-specific metrics, and lightweight static CI.
+- **Privacy:** datasets, medical images, checkpoints, and training outputs are not included.
 
-The BUSI binary experiment uses the benign and malignant classes and excludes normal images. The paper-faithful baseline loads each scan as grayscale, repeats the grayscale values across three channels, resizes directly to 224 × 224, and scales pixels by 255. This explicitly follows the paper description and differs from the original notebook's RGB conversion. A stratified 80:20 image-level train/test split is created; 10% of the training portion is held back for validation, resulting in an effective 72%/8%/20% split. The image-level split may allow related images from one lesion to cross partitions.
+## Architecture
 
-The baseline uses ImageNet-pretrained VGG16 with `include_top=False` and a frozen convolutional base, followed by GlobalAveragePooling2D, Dense(256, ReLU), Dropout(0.5), and Dense(2, softmax). Training uses Adam at 1e-4, categorical cross-entropy, batch size 16, up to 20 epochs, EarlyStopping with patience 5, and a checkpoint selected by validation loss.
+The baseline loads BUSI images as grayscale, resizes directly to 224 × 224, scales values to `[0, 1]`, repeats grayscale into three channels, and feeds a frozen ImageNet VGG16 backbone followed by GlobalAveragePooling2D, Dense(256, ReLU), Dropout(0.5), and Dense(2, softmax).
 
-### Separate experiments
+See [the architecture and experiment map](docs/architecture.md) for the Mermaid diagram and the boundary between the baseline and its extensions.
 
-- **Augmentation:** horizontal flip, small random rotation, and small random zoom; applied only during training.
-- **Class weighting:** computes balanced weights from the training split only.
-- **Block-5 fine-tuning:** unfreezes VGG16 block 5 in a second stage at learning rate 1e-5.
-- **Letterbox:** preserves aspect ratio with centered black padding. Historical result combines letterboxing with class weighting and fine-tuning, so it does not isolate the padding effect.
-- **BUS-BRA:** evaluates a saved BUSI model externally. The threshold must come from BUSI validation data; BUS-BRA is not used for training or threshold selection. Case scores average image-level malignant probabilities.
+## Baseline and separate experiments
 
-## Datasets and citations
+The baseline follows the paper-faithful configuration described in the project: benign and malignant BUSI classes only, grayscale repeated across channels, direct resize, `/255` normalization, frozen VGG16 convolutional layers, and no augmentation, class weighting, letterbox preprocessing, or fine-tuning. The experiment code uses Adam at `1e-4`, categorical cross-entropy, batch size 16, up to 20 epochs, early stopping, and a checkpoint selected by validation loss.
 
-Datasets are not bundled. Obtain them from their authoritative sources and review their terms before use.
+Extensions are separate workflows and do not redefine the baseline:
 
-- **BUSI:** 780 images in the original three-class dataset (normal, benign, malignant); the binary experiment uses 647 benign/malignant images according to the project audit. Cite Al-Dhabyani W, Gomaa M, Khaled H, Fahmy A. “Dataset of breast ultrasound images.” *Data in Brief*. 2020;28:104863. [doi:10.1016/j.dib.2019.104863](https://doi.org/10.1016/j.dib.2019.104863).
-- **BUS-BRA:** 1,875 images from 1,064 cases, used here only for external evaluation. Cite Gómez-Flores W, Gregorio-Calas MJ, Coelho de Albuquerque Pereira W. “BUS-BRA: A breast ultrasound dataset for assessing computer-aided diagnosis systems.” *Medical Physics*. 2024;51:3110–3123. [doi:10.1002/mp.16812](https://doi.org/10.1002/mp.16812). [Dataset on Zenodo](https://doi.org/10.5281/zenodo.8231412).
-
-The project notes report that the BUSI ZIP used historically did not contain separate mask files. Classification does not use masks; confirm the exact archive and release before making claims about mask availability.
+- **Augmentation:** horizontal flips, small rotations, and zoom; applied only during training.
+- **Class weighting:** balanced weights computed from the training partition.
+- **Block-5 fine-tuning:** a second stage at learning rate `1e-5` after frozen-backbone training.
+- **Letterbox:** aspect-ratio-preserving resize with centered padding. Its recorded result also used class weighting and fine-tuning, so it does not isolate the padding change.
+- **BUS-BRA:** external evaluation of a BUSI-trained model. The decision threshold is sourced from BUSI validation data and is not tuned on BUS-BRA.
 
 ## Recorded results
 
-These are historical notebook outputs and project audit values, not results regenerated by the new code. BUSI test results are exploratory because the same test split was reused across experiments. The paper-reported ROC-AUC **0.67** is distinct from the notebook-measured baseline ROC-AUC **0.8003**.
+Values below are historical records, not results regenerated by CI. BUSI test metrics are exploratory because the same test split was reused across experiments. The paper-reported ROC-AUC of **0.67** is separate from the notebook-measured baseline ROC-AUC of **0.8003**.
 
-| Experiment | Split | Accuracy | ROC-AUC | Malignant recall |
+| Experiment | Evaluation split | Accuracy | ROC-AUC | Malignant recall |
 |---|---|---:|---:|---:|
 | Original VGG16, default argmax | BUSI exploratory test | 76.15% | 0.8003 | 35.71% |
 | Original VGG16, validation-selected threshold | BUSI exploratory test | 73.85% | 0.8003 | 73.81% |
 | Class-weighted VGG16 | BUSI exploratory test | 75.38% | 0.8036 | 73.81% |
-| Class-weighted + block-5 fine-tuning | BUSI exploratory test | 86.92% | 0.9351 | 73.81% |
+| Class-weighted VGG16 with block-5 fine-tuning | BUSI exploratory test | 86.92% | 0.9351 | 73.81% |
 | Fine-tuned BUSI model | BUS-BRA image level | 64.00% | 0.6232 | 34.43% |
 | Fine-tuned BUSI model | BUS-BRA case level | 68.80% | 0.6475 | 28.07% |
 | Letterbox + class weighting + fine-tuning | BUSI validation only | 82.69% | 0.8689 | Not recorded |
 
-The fine-tuned experiment's **93.98% training accuracy is not test accuracy**. Its test accuracy is 86.92%. The letterbox result is validation-only. See [experimental findings](docs/experimental_findings.md) and [the complete CSV](results/metrics/model_comparison.csv) for threshold, precision, F1, and caveats.
+The fine-tuned experiment's **93.98% is training accuracy**, not test accuracy; its historical BUSI test accuracy is **86.92%**. The letterbox result is validation-only. The BUSI image-level split may place related images across partitions. BUS-BRA results are external dataset measurements and show weaker generalization. See the [full machine-readable metrics](results/metrics/model_comparison.csv) and [experimental findings and caveats](docs/experimental_findings.md).
 
-## Installation
+### Visual summaries
 
-Recommended Python: 3.10–3.12. TensorFlow GPU availability depends on the operating system and installed CUDA/runtime; the code also runs on CPU for small checks.
+These figures are generated from `results/metrics/model_comparison.csv` by [`scripts/generate_result_figures.py`](scripts/generate_result_figures.py). They do not add, refit, or recompute model predictions.
+
+**BUSI exploratory test experiments** — the reused exploratory split is labeled in the figure.
+
+![BUSI exploratory test comparison](results/figures/busi_exploratory_test_comparison.png)
+
+**BUS-BRA external evaluation** — image-level and case-level aggregation are shown separately.
+
+![BUS-BRA external evaluation by aggregation level](results/figures/busbra_external_evaluation.png)
+
+**Letterbox preprocessing** — validation-only result; not an independent test evaluation.
+
+![Letterbox BUSI validation-only result](results/figures/letterbox_validation_only.png)
+
+## Dataset and citations
+
+Datasets are not bundled. Obtain them from their authoritative sources and review their current terms before use. Keep images, masks, and patient information outside this repository.
+
+- **BUSI:** 780 images in the original three-class dataset; this binary workflow uses 437 benign and 210 malignant images. Al-Dhabyani W, Gomaa M, Khaled H, Fahmy A. “Dataset of breast ultrasound images.” *Data in Brief*. 2020;28:104863. [doi:10.1016/j.dib.2019.104863](https://doi.org/10.1016/j.dib.2019.104863).
+- **BUS-BRA:** 1,875 images from 1,064 cases, used here only for external evaluation. Gómez-Flores W, Gregorio-Calas MJ, Coelho de Albuquerque Pereira W. “BUS-BRA: A breast ultrasound dataset for assessing computer-aided diagnosis systems.” *Medical Physics*. 2024;51:3110–3123. [doi:10.1002/mp.16812](https://doi.org/10.1002/mp.16812). [Dataset record](https://doi.org/10.5281/zenodo.8231412).
+
+The project notes report that the BUSI ZIP used historically did not contain separate mask files. Classification does not use masks; confirm the exact release before making claims about mask availability. More details are in [dataset documentation](docs/dataset_documentation.md).
+
+### Research paper and software authorship
+
+The research paper authors are Kummari Vishnu, Chegu Bhargav Srikar, and Pagalla Ashok; their published authorship is documented in [the paper methodology notes](docs/paper_methodology.md). The software developer, author, and maintainer for this repository is **Chegu Bhargav Srikar**. Use [`CITATION.cff`](CITATION.cff) to cite this software. The paper and software are distinct citation targets. No DOI, software release, or code license is claimed.
+
+## Quickstart
+
+Use Python 3.10–3.12. Create a virtual environment, install the project requirements, then run an experiment only when you intend to train:
 
 ```bash
 python -m venv .venv
@@ -59,71 +89,66 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-## Local use
+The lightweight static suite does not require TensorFlow. Run it from the repository root:
 
-The expected local layout is `data/BUSI/` containing the `benign_tumor/`, `malignant_tumor/`, and `normal_scan/` directories. The baseline reads only benign and malignant. `data/` is ignored by Git. BUS-BRA can be kept at `data/BUSBRA.zip` for convenience; that archive is also ignored. Alternatively, store data elsewhere and set `BUSI_ROOT` or pass `--data-root`. The folder can contain the class folders directly or a parent folder containing them.
+```bash
+python -m unittest discover -s tests -v
+python -m compileall -q src tests scripts
+```
+
+For lint and formatting checks, install the pinned development tool and run:
+
+```bash
+python -m pip install -r requirements-dev.txt
+ruff check src tests scripts
+ruff format --check src tests scripts
+```
+
+These checks parse notebook JSON and Python code cells without executing notebooks. Static CI does not train models, evaluate datasets, verify model accuracy, or establish clinical performance.
+
+## Notebook execution order
+
+1. [`00_runtime_smoke_test.ipynb`](notebooks/00_runtime_smoke_test.ipynb) checks runtime imports and configured data paths with no training. Requirements installation and model-weight fetching are explicit opt-ins.
+2. [`01_paper_reproduction.ipynb`](notebooks/01_paper_reproduction.ipynb) inspects the baseline dataset and split; training is disabled unless explicitly enabled.
+3. [`02_data_augmentation.ipynb`](notebooks/02_data_augmentation.ipynb) runs the training-only augmentation extension when explicitly enabled.
+4. [`03_model_improvements.ipynb`](notebooks/03_model_improvements.ipynb) selects class weighting, block-5 fine-tuning, or letterbox experiments.
+5. [`04_external_validation.ipynb`](notebooks/04_external_validation.ipynb) evaluates an existing BUSI checkpoint on BUS-BRA and requires its matching BUSI validation threshold provenance.
+
+For a local checkout, BUSI can be arranged as `data/BUSI/benign_tumor/`, `data/BUSI/malignant_tumor/`, and `data/BUSI/normal_scan/`. The `data/` directory is ignored. Set `BUSI_ROOT` or pass `--data-root` to use another location. For Colab setup and output paths, follow the smoke-test notebook and keep datasets outside the repository.
+
+Training is an explicit CLI command and writes to a new UTC timestamped run folder:
 
 ```bash
 python -m src.train --experiment baseline --data-root "D:/datasets/BUSI" --output-root "D:/busi-runs"
 ```
 
-Training is an explicit command; importing the modules or opening the notebooks does not start training. Each invocation writes to a new UTC timestamped folder to avoid overwriting earlier runs. Available choices are `baseline`, `augmentation`, `class_weighted`, `finetuned`, and `letterbox`.
+Available experiments are `baseline`, `augmentation`, `class_weighted`, `finetuned`, and `letterbox`. For external evaluation, supply the selected model's adjacent `metrics.json`; legacy thresholds must be explicitly supplied and verified as selected on BUSI validation data. BUS-BRA must not be used for training or threshold selection.
 
-For BUS-BRA external evaluation, supply a saved model, the BUS-BRA ZIP, an output directory, and the matching run's metrics file containing a threshold selected using BUSI validation data:
-
-```bash
-python -m src.evaluate --model "D:/busi-runs/finetuned/<run>/best_model.keras" --busbra-zip "D:/datasets/BUSBRA.zip" --output-dir "D:/busi-runs/busbra-evaluation" --metrics-json "D:/busi-runs/finetuned/<run>/metrics.json"
-```
-
-The evaluator loads the threshold from the checkpoint run's matching `metrics.json` and fails if it cannot verify that the value was selected on BUSI validation data. For a legacy checkpoint without that file, pass `--threshold <value>` only when you have confirmed the correct BUSI validation threshold for that checkpoint. Never optimize it on BUS-BRA.
-
-## Google Colab
-
-1. Open `notebooks/00_runtime_smoke_test.ipynb` first to check the Colab runtime without training. Then open an experiment notebook as needed.
-2. Clone your published repository or upload the project source folder into the Colab runtime. Do not upload datasets into the repository or commit them.
-3. If data or outputs are stored in Drive, set `USE_GOOGLE_DRIVE = True` in the notebook's Drive setup cell and authorize the mount. Otherwise leave it false and set the paths to runtime storage. A convenient local checkout layout is `/content/data/BUSI/` with the three BUSI class folders; it is outside the source repository.
-4. Set `PROJECT_ROOT` to the checked-out project folder. Install `requirements.txt` in the runtime and select a GPU runtime if available.
-5. Set `BUSI_ROOT` or `BUSBRA_ZIP` to the dataset location and set an output directory outside the repository. For external evaluation, point `BUSI_METRICS_JSON` to the selected checkpoint's adjacent metrics file, or set an explicit `BUSI_VALIDATION_THRESHOLD` for a verified legacy run.
-6. Review the notebook cells. Training/evaluation cells default to disabled; enable only the action you intend to run.
-
-Example setup after cloning the published repository into `/content`:
-
-```python
-PROJECT_ROOT = Path("/content/Breast-Cancer-Detection-VGG16")
-USE_GOOGLE_DRIVE = True  # optional; set False to use runtime paths
-BUSI_ROOT = Path("/content/drive/MyDrive/BreastCancerProject/BUSI")
-OUTPUT_ROOT = Path("/content/drive/MyDrive/BreastCancerProject/reproducible_runs")
-```
-
-From a Colab cell, after setting the repository location:
-
-```python
-%cd /content/Breast-Cancer-Detection-VGG16
-%pip install -r requirements.txt
-```
-
-The runtime smoke-test notebook is `00_runtime_smoke_test.ipynb`. The four publication-ready experiment notebooks are `01_paper_reproduction.ipynb`, `02_data_augmentation.ipynb`, `03_model_improvements.ipynb`, and `04_external_validation.ipynb`. The original Colab notebook remains unchanged in the project root and its byte-identical archive copy remains under `notebooks/archive/`. Both original paths are ignored for publication because saved outputs contain embedded BUSI/BUS-BRA scan imagery.
-
-## Repository map
+## Repository structure
 
 ```text
-src/                  Reusable config, OpenCV preprocessing, model, train, evaluation code
-notebooks/            Four publication-ready experiment entry points; local archive excluded
-docs/                 Methodology, results, dataset notes, licensing status
-results/metrics/      Historical comparison table; no models or datasets
+.github/             Lightweight CI and dependency update configuration
+docs/                Methodology, architecture, results, dataset, and licensing notes
+notebooks/           Smoke test and four clean research workflow notebooks
+results/figures/     Reproducible plots generated from the historical metrics CSV
+results/metrics/     Historical comparison table; no models or datasets
+scripts/             Metrics-based result figure generator
+src/                 Reusable configuration, preprocessing, model, training, evaluation
+tests/               Dependency-light structural and research-result regression checks
 ```
+
+The original root Colab notebook and its archived byte-identical copy are retained locally but intentionally excluded from the public repository because their outputs include scan imagery. Local paper and resume PDFs are also excluded. See `.gitignore` for publication exclusions.
 
 ## Limitations and responsible use
 
-- BUSI test metrics are exploratory due to repeated use of the same split; image-level splitting may also permit lesion-level leakage.
-- BUS-BRA results show weaker cross-dataset performance and must remain distinct from BUSI development results.
-- Letterbox has not been evaluated on a final test set, and the historical experiment also changes class weighting and fine-tuning.
-- The BUSI archive used in the historical work reportedly lacked separate masks; this should be checked against the exact release.
-- The work is not a prospective clinical study and is not clinically validated. It must not guide individual diagnosis or treatment.
-- No repository license is applied. The authors must confirm authority to license the code before adding a `LICENSE` file. Dataset access terms are separate.
-- Local paper/resume PDFs and the original history notebooks are preserved in a checkout but excluded from publication. The clean experiment notebooks remain available.
+- Repeated use of the BUSI test split makes its recorded results exploratory; a confirmatory study needs an untouched test set or a grouped/nested evaluation design.
+- The current BUSI split is image-level, not lesion- or patient-grouped, so related views may cross splits.
+- BUS-BRA results show a cross-dataset generalization challenge and are not clinical validation.
+- Letterbox metrics are validation-only and confounded with class weighting and fine-tuning.
+- The historical BUSI archive and exact mask availability should be checked against the specific dataset release used.
+- This work is not a prospective clinical study and must not guide individual diagnosis or treatment.
+- Dataset terms are independent of software terms. No `LICENSE` is included until the authors confirm authority to license the code.
 
-## Acknowledgment
+## Contributing and security
 
-The root-level `Breast_Cancer_VGG16_Colab.ipynb` and its archived copy are preserved locally and ignored by Git. The clean notebooks call the new source modules and do not silently replace historical results. Local paper/resume PDFs are also ignored; the four clean notebooks are the only notebooks intended for publication.
-
+See [contribution and validation guidance](CONTRIBUTING.md) and [security and sensitive-data reporting](SECURITY.md). Never commit datasets, scan images, personal health information, credentials, model checkpoints, or temporary run outputs.

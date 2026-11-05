@@ -11,7 +11,6 @@ import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
-
 CLASS_NAMES = ("benign", "malignant")
 CLASS_TO_INDEX = {name: index for index, name in enumerate(CLASS_NAMES)}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
@@ -70,7 +69,9 @@ def discover_busi_images(data_root: str | Path) -> list[ImageRecord]:
         )
         records.extend(ImageRecord(path, CLASS_TO_INDEX[class_name]) for path in paths)
 
-    counts = {name: sum(r.label == index for r in records) for index, name in enumerate(CLASS_NAMES)}
+    counts = {
+        name: sum(r.label == index for r in records) for index, name in enumerate(CLASS_NAMES)
+    }
     if any(counts[name] == 0 for name in CLASS_NAMES):
         raise ValueError(f"Both binary classes must have images; found counts: {counts}")
     return records
@@ -186,9 +187,7 @@ def make_tf_dataset(
 
     def load_one(path: tf.Tensor, label: tf.Tensor) -> tuple[tf.Tensor, tf.Tensor]:
         image = tf.numpy_function(
-            func=lambda raw_path: _decode_and_preprocess(
-                raw_path, image_height, image_width, mode
-            ),
+            func=lambda raw_path: _decode_and_preprocess(raw_path, image_height, image_width, mode),
             inp=[path],
             Tout=tf.float32,
         )
@@ -201,4 +200,3 @@ def make_tf_dataset(
     options = tf.data.Options()
     options.experimental_deterministic = True
     return dataset.with_options(options).prefetch(tf.data.AUTOTUNE)
-

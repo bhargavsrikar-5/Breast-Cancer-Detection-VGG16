@@ -1,6 +1,7 @@
 # Medical datasets and derived data
 /data/
 /datasets/
+/dataset/
 /BUSI/
 /BUSBRA/
 /local_images/
@@ -13,6 +14,12 @@
 *.npz
 *.npy
 *.parquet
+*.tfrecord
+*.tfrecords
+*.dcm
+*.dicom
+*.nii
+*.nii.gz
 
 # Local source/reference material and historical notebook with embedded scans
 /Breast_Cancer_VGG16_Colab.ipynb
@@ -24,9 +31,15 @@
 *.keras
 *.h5
 *.hdf5
+*.ckpt
+*.weights
 /results/runs/
 /results/checkpoints/
 /results/tmp/
+**/checkpoints/
+/runs/
+/outputs/
+/output/
 
 # Python and notebook state
 __pycache__/
@@ -36,6 +49,15 @@ __pycache__/
 .ruff_cache/
 .ipynb_checkpoints/
 *.log
+*.tmp
+*.bak
+.coverage
+htmlcov/
+.tox/
+build/
+dist/
+.DS_Store
+Thumbs.db
 
 # Local environment and secrets
 .env

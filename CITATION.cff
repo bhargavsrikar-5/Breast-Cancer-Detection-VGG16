@@ -1,0 +1,7 @@
+cff-version: "1.2.0"
+message: "If you use this software, please cite the research project as follows."
+title: "Breast Cancer Detection Using VGG16"
+authors:
+  - name: "Chegu Bhargav Srikar"
+repository-code: "https://github.com/bhargavsrikar-5/Breast-Cancer-Detection-VGG16"
+type: software

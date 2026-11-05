@@ -6,7 +6,6 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -49,4 +48,3 @@ class ProjectConfig:
             output_root=Path(resolved_output).expanduser().resolve(),
             seed=int(seed if seed is not None else os.environ.get("PROJECT_SEED", "42")),
         )
-

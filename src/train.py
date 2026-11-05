@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,7 +28,6 @@ from src.preprocessing import (
     make_stratified_splits,
     make_tf_dataset,
 )
-
 
 EXPERIMENTS = ("baseline", "augmentation", "class_weighted", "finetuned", "letterbox")
 
@@ -149,20 +148,35 @@ def train_experiment(config: ProjectConfig, experiment: str) -> Path:
     preprocess_mode = "letterbox" if experiment == "letterbox" else "resize"
     augmentation = experiment == "augmentation"
     train_data = make_tf_dataset(
-        splits.train, config.batch_size, config.image_height, config.image_width,
-        training=True, seed=config.seed, mode=preprocess_mode,
+        splits.train,
+        config.batch_size,
+        config.image_height,
+        config.image_width,
+        training=True,
+        seed=config.seed,
+        mode=preprocess_mode,
     )
     validation_data = make_tf_dataset(
-        splits.validation, config.batch_size, config.image_height, config.image_width,
+        splits.validation,
+        config.batch_size,
+        config.image_height,
+        config.image_width,
         mode=preprocess_mode,
     )
     test_data = make_tf_dataset(
-        splits.test, config.batch_size, config.image_height, config.image_width,
+        splits.test,
+        config.batch_size,
+        config.image_height,
+        config.image_width,
         mode=preprocess_mode,
     )
 
     run_dir = _unique_run_dir(config.output_root, experiment)
-    class_weights = _weights(splits.train) if experiment in ("class_weighted", "finetuned", "letterbox") else None
+    class_weights = (
+        _weights(splits.train)
+        if experiment in ("class_weighted", "finetuned", "letterbox")
+        else None
+    )
     histories: dict[str, dict[str, list[float]]] = {}
 
     # The paper-faithful baseline is frozen and has no class weighting,
@@ -182,7 +196,11 @@ def train_experiment(config: ProjectConfig, experiment: str) -> Path:
     # low-learning-rate block-5 stage, not the paper-faithful baseline.
     if experiment in ("finetuned", "letterbox"):
         model = tf.keras.models.load_model(run_dir / "best_model.keras")
-        backbone = next(layer for layer in model.layers if isinstance(layer, tf.keras.Model) and layer.name == "vgg16")
+        backbone = next(
+            layer
+            for layer in model.layers
+            if isinstance(layer, tf.keras.Model) and layer.name == "vgg16"
+        )
         backbone.trainable = True
         for layer in backbone.layers:
             layer.trainable = layer.name.startswith("block5_")
@@ -283,4 +301,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
