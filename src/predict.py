@@ -8,8 +8,6 @@ import math
 from pathlib import Path
 from typing import Any, Callable
 
-import numpy as np
-
 CLASS_NAMES = ("benign", "malignant")
 IMAGE_SIZE = (224, 224)
 
@@ -30,18 +28,27 @@ def validate_probabilities(output: Any) -> tuple[float, float]:
     """Validate one benign/malignant softmax output and return its probabilities."""
 
     try:
-        values = np.asarray(output, dtype=np.float64)
+        if hasattr(output, "tolist"):
+            output = output.tolist()
     except (TypeError, ValueError) as exc:
         raise ValueError("Model output must contain two numeric class probabilities") from exc
-    if values.shape != (1, 2):
-        raise ValueError(f"Expected model prediction shape (1, 2), received {values.shape}")
-    if not np.isfinite(values).all():
+    if not isinstance(output, (list, tuple)) or len(output) != 1:
+        shape = getattr(output, "shape", None)
+        raise ValueError(f"Expected model prediction shape (1, 2), received {shape or 'invalid'}")
+    row = output[0]
+    if not isinstance(row, (list, tuple)) or len(row) != 2:
+        raise ValueError("Expected model prediction shape (1, 2)")
+    try:
+        benign, malignant = (float(probability) for probability in row)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("Model output must contain two numeric class probabilities") from exc
+    if not math.isfinite(benign) or not math.isfinite(malignant):
         raise ValueError("Model output contains NaN or infinity")
-    if ((values < 0) | (values > 1)).any():
+    if not 0 <= benign <= 1 or not 0 <= malignant <= 1:
         raise ValueError("Model probabilities must be between 0 and 1")
-    if not np.isclose(values.sum(), 1.0, rtol=1e-5, atol=1e-6):
+    if not math.isclose(benign + malignant, 1.0, rel_tol=1e-5, abs_tol=1e-6):
         raise ValueError("Model class probabilities must sum to 1")
-    return float(values[0, 0]), float(values[0, 1])
+    return benign, malignant
 
 
 def classify_probabilities(
@@ -53,7 +60,7 @@ def classify_probabilities(
 
     probabilities = validate_probabilities([[benign_probability, malignant_probability]])
     if threshold is None:
-        return CLASS_NAMES[int(np.argmax(probabilities))], "Argmax"
+        return CLASS_NAMES[int(probabilities[1] > probabilities[0])], "Argmax"
     value = validate_threshold(threshold)
     predicted = "malignant" if probabilities[1] >= value else "benign"
     return predicted, f"Malignant probability threshold ({value:g})"
@@ -115,7 +122,9 @@ def resolve_threshold(
         raise ValueError("Metrics JSON contains no selected BUSI validation threshold")
     value = validate_threshold(selected)
     validation_value = validation.get("selected_f1_threshold")
-    if validation_value is not None and not np.isclose(value, validate_threshold(validation_value)):
+    if validation_value is not None and not math.isclose(
+        value, validate_threshold(validation_value), rel_tol=1e-5, abs_tol=1e-8
+    ):
         raise ValueError("Threshold fields disagree in the metrics JSON")
     return value, f"{metrics_file} (BUSI validation metrics)"
 
@@ -144,6 +153,10 @@ def preprocess_image(
     image = image_reader(str(path))
     if image is None:
         raise ValueError(f"OpenCV could not read image: {path}")
+    try:
+        import numpy as np
+    except ImportError as exc:
+        raise RuntimeError("NumPy is required for image inference; install requirements.txt") from exc
     if preprocessor is None:
         # Reuse the existing pipeline implementation (same resize and normalization).
         try:

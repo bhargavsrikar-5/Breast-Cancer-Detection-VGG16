@@ -9,7 +9,10 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 from src.predict import (
     classify_probabilities,
@@ -54,6 +57,7 @@ class PredictionTests(unittest.TestCase):
             with self.assertRaisesRegex(FileNotFoundError, "Image file"):
                 predict_image(checkpoint, folder / "missing.png")
 
+    @unittest.skipIf(np is None, "NumPy is needed to exercise image preprocessing")
     def test_prediction_with_injected_dependencies_and_json_structure(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             folder = Path(temporary)
@@ -88,6 +92,7 @@ class PredictionTests(unittest.TestCase):
             self.assertIn("threshold_source", saved)
             self.assertAlmostEqual(saved["confidence"], 0.82, places=6)
 
+    @unittest.skipIf(np is None, "NumPy is needed to exercise image preprocessing")
     def test_invalid_model_prediction_output_is_reported(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             folder = Path(temporary)
